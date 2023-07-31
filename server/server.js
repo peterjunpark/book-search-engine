@@ -1,13 +1,8 @@
 const path = require("path");
-
-// MongoDB
 const db = require("./config/connection");
-
-// REST API
 const express = require("express");
-const routes = require("./routes");
 
-// Apollo Server
+// Apollo Server 4
 const http = require("http");
 const cors = require("cors");
 const { json } = require("body-parser");
@@ -26,24 +21,18 @@ const server = new ApolloServer({
   resolvers,
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
+
 const startApolloServer = async () => {
   await server.start();
 
-  app.use(
-    "/graphql",
-    cors(),
-    json(),
-    expressMiddleware(server, {
-      context: async ({ req }) => ({ token: req.headers.token }),
-    })
-  );
+  app.use("/graphql", cors(), json(), expressMiddleware(server));
 
   db.once("open", async () => {
-    app.listen(PORT, () => {
-      console.log(`🌍 Now listening on http://localhost:${PORT}`);
-    });
-    await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
-    console.log(`🚀 Server ready at http://localhost:4000/graphql`);
+    // app.listen(PORT, () => {
+    //   console.log(`🌍 Now listening on http://localhost:${PORT}`);
+    // });
+    await new Promise((resolve) => httpServer.listen({ port: PORT }, resolve));
+    console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
   });
 };
 
@@ -53,6 +42,5 @@ app.use(express.json());
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../client/build")));
 }
-app.use(routes);
 
 startApolloServer();
