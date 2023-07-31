@@ -40,9 +40,10 @@ const startApolloServer = async () => {
 
   db.once("open", async () => {
     app.listen(PORT, () => {
-      console.log(`🌍 Now listening on localhost:${PORT}`);
+      console.log(`🌍 Now listening on http://localhost:${PORT}`);
     });
     await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
+    console.log(`🚀 Server ready at http://localhost:4000/graphql`);
   });
 };
 
