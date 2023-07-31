@@ -7,27 +7,42 @@ const db = require("./config/connection");
 const express = require("express");
 const routes = require("./routes");
 
-// GraphQL API
+// Apollo Server
+const http = require("http");
+const cors = require("cors");
+const { json } = require("body-parser");
 const { ApolloServer } = require("@apollo/server");
+const { expressMiddleware } = require("@apollo/server/express4");
+const {
+  ApolloServerPluginDrainHttpServer,
+} = require("@apollo/server/plugin/drainHttpServer");
 const { typeDefs, resolvers } = require("./schemas");
 
 const PORT = process.env.PORT || 3001;
 const app = express();
+const httpServer = http.createServer(app);
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
 const startApolloServer = async () => {
   await server.start();
-  server.applyMiddleware({ app });
 
-  db.once("open", () => {
+  app.use(
+    "/graphql",
+    cors(),
+    json(),
+    expressMiddleware(server, {
+      context: async ({ req }) => ({ token: req.headers.token }),
+    })
+  );
+
+  db.once("open", async () => {
     app.listen(PORT, () => {
       console.log(`🌍 Now listening on localhost:${PORT}`);
-      console.log(
-        `🌍 Use GraphQL at http://localhost${PORT}${server.graphqlPath}`
-      );
     });
+    await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
   });
 };
 

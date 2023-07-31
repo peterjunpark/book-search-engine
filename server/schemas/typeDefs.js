@@ -1,6 +1,6 @@
-const { gql } = require("@apollo/server");
+// const { gql } = require("@apollo/server");
 
-const typeDefs = gql`
+const typeDefs = `#graphql
   type Book {
     bookId: ID!
     title: String!
