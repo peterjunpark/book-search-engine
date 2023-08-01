@@ -1,5 +1,5 @@
-const { Book, User } = require("../models");
-const { AuthenticationError } = require("@apollo/server");
+const { User } = require("../models");
+const { GraphQLError } = require("graphql");
 const { signToken } = require("../utils/auth");
 
 const resolvers = {
@@ -13,7 +13,11 @@ const resolvers = {
         return userData;
       }
 
-      throw new AuthenticationError("Must be logged in.");
+      throw new GraphQLError("Must be logged in.", {
+        extensions: {
+          code: "UNAUTHENTICATED",
+        },
+      });
     },
   },
   Mutation: {
@@ -27,13 +31,21 @@ const resolvers = {
       const user = await User.findOne({ email });
 
       if (!user) {
-        throw new AuthenticationError("Incorrect credentials");
+        throw new GraphQLError("Incorrect credentials", {
+          extensions: {
+            code: "UNAUTHENTICATED",
+          },
+        });
       }
 
       const correctPw = await user.isCorrectPassword(password);
 
       if (!correctPw) {
-        throw new AuthenticationError("Incorrect credentials");
+        throw new GraphQLError("Incorrect credentials", {
+          extensions: {
+            code: "UNAUTHENTICATED",
+          },
+        });
       }
 
       const token = signToken(user);
@@ -50,7 +62,11 @@ const resolvers = {
         return updatedUser;
       }
 
-      throw new AuthenticationError("You need to be logged in!");
+      throw new GraphQLError("You need to be logged in!", {
+        extensions: {
+          code: "UNAUTHENTICATED",
+        },
+      });
     },
     removeBook: async (parent, { bookId }, context) => {
       if (context.user) {
@@ -63,7 +79,11 @@ const resolvers = {
         return updatedUser;
       }
 
-      throw new AuthenticationError("You need to be logged in!");
+      throw new GraphQLError("You need to be logged in!", {
+        extensions: {
+          code: "UNAUTHENTICATED",
+        },
+      });
     },
   },
 };
